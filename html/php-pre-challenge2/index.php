@@ -4,9 +4,9 @@ $array = explode(',', $_GET['array']);
 // 修正はここから
 $count = count($array);
 for ($i = 0; $i < $count; $i++) {
-    for($j = 0; $j <$count; $j++){
-        //$iより$jの値が大きければ
-        if ($array[$i] < $array[$j]){
+    for($j = $i+1; $j <$count; $j++){
+        //$iの値が$jの値より大きければ
+        if ($array[$i] > $array[$j]){
             //$tmpに$iを一旦代入
             $tmp = $array[$i];
             //$iに$jを代入して入れ替える
