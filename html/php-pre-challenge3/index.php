@@ -31,3 +31,26 @@ $result = $stmt->fetchAll(PDO::FETCH_COLUMN);
 foreach ($result as $value) {
     $values[] = (int) $value; //取り出した値を文字列からint型に変換する
 }
+//全ての組み合わせを作る　参考サイト：https://stabucky.com/wp/archives/2188
+function combinations($array, $pick) //combinationファンクションで$array(配列全体)、$pick(選びとる数)の全ての組み合わせを作成
+{
+    $arrayCount = count($array);
+    if ($arrayCount < $pick) {
+        return;
+    } elseif ($pick == 1) {
+        for ($i = 0; $i < $arrayCount; $i++) {
+            $arrs[$i] = array($array[$i]);
+        }
+    } elseif ($pick > 1) {
+        $j = 0;
+        for ($i = 0; $i < $arrayCount - $pick + 1; $i++) {
+            $ts = combinations(array_slice($array, $i + 1), $pick - 1);
+            foreach ($ts as $t) {
+                array_unshift($t, $array[$i]);
+                $arrs[$j] = $t;
+                $j++;
+            }
+        }
+    }
+    return $arrs;
+}
