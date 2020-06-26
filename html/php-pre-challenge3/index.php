@@ -54,7 +54,18 @@ function combinations($array, $pick) //combinationファンクションで$array
     }
     return $arrs;
 }
+//作られた組み合わせから合計と一致するものを出力する
 
+$length = count($values);          //$valueはデータベースに入っている値、$lengthにデータベースの要素の数を代入
+$answers = [];                        //一致するものを$answersに入れる
+for ($i = 1; $i < $length + 1; $i++) {
+    $contents = combinations($values, $i);   //データベースの組み合わせの結果を代入
+    foreach ($contents as $content) {
+        if (array_sum($content) === $limit) { //$contentの合計を$limit(getパラメータの値)と比較
+            $answers[] = $content;  //同一であれば$answersに$contentを含める array_pushより[]の方が速度が早いようなので[]であとで書き換える
+        }
+    }
+}
 
 //JSON形式で出力
 echo json_encode($answers);
