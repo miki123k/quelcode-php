@@ -21,10 +21,13 @@ try {
     exit();
 }
 
-//データベースから値をとってくる
-
-//全ての数字の組み合わせをつくる（コピペでOK）2×８−１＝２５６の組み合わせになる
-
-//作られた組み合わせから合計と一致するものを出力
-
-//それをJSON形式で出力
+//データベースから値をとってくる 参考サイト：https://www.youtube.com/watch?v=hnBUheNUAL0
+//①SQLの準備
+$sql = 'SELECT value FROM prechallenge3'; //prechallenge3テーブルに保存されている値を取り出す
+//②SQLの実行
+$stmt = $db->query($sql);
+//③SQLの結果取り出し
+$result = $stmt->fetchAll(PDO::FETCH_COLUMN);
+foreach ($result as $value) {
+    $values[] = (int) $value; //取り出した値を文字列からint型に変換する
+}
