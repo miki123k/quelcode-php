@@ -54,3 +54,7 @@ function combinations($array, $pick) //combinationファンクションで$array
     }
     return $arrs;
 }
+
+
+//JSON形式で出力
+echo json_encode($answers);
