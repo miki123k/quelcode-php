@@ -119,44 +119,20 @@ function makeLink($value)
 				$likes_count->execute(array($post['id']));
 				$like_count = $likes_count->fetch();
 
+				//リツイート機能
+				$retweets = $db->prepare('SELECT retweet_member_id,retweet_post FROM retweets WHERE retweet_member_id=? AND retweet_post=?');
+				$retweets->execute(array($member['id'], $post['id']));
+				$retweet = $retweets->fetch();
+				//リツイート数の計算
+				$retweets_count = $db->prepare('SELECT COUNT(*) AS retweet_count FROM retweets WHERE retweet_post=?');
+				$retweets_count->execute(array($post['id']));
+				$retweet_count = $retweets_count->fetch();
+
 			?>
 				<div class="msg">
 					<img src="member_picture/<?php echo h($post['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
 					<p><?php echo makeLink(h($post['message'])); ?><span class="name">（<?php echo h($post['name']); ?>）</span>[<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
 					<p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a>
-						<!--ハートこの辺-->
-						<!--likes.phpにGETパラメータで値を受け渡す-->
-						<?php
-						if ($like) : //自分のidとlikeテーブルのmember_idが同じであり投稿のidとlikeテーブルのpost_idも同じものがあれば$LIKEに入っているので
-						?>
-							<!--もし$likeに入っていれば赤いハートを表示-->
-							<a href="cancel_likes.php?id=<?php echo h($post['id']); ?>"><img src="images/ハートのマーク.png" width="15" height="15" alt="いいね済みハート"></img></a>
-							<?php
-							if (!$like_count['post_count'] == 0) : //もしいいね数が０でなければ
-							?>
-								<?php
-								echo $like_count['post_count']; //いいねのカウント数表示する
-								?>
-							<?php
-							endif;
-							?>
-						<?php
-						else :
-						?>
-							<!--なければ色の無いハートを表示-->
-							<a href="likes.php?id=<?php echo h($post['id']); ?>"><img src="images/8760.png" width="15" height="15" alt="色無しハート"></img></a>
-							<?php
-							if (!$like_count['post_count'] == 0) : //もしいいね数が０でなければ
-							?>
-								<?php
-								echo $like_count['post_count']; //いいねのカウント数表示する
-								?>
-							<?php
-							endif;
-							?>
-						<?php
-						endif;
-						?>
 						<?php
 						if ($post['reply_post_id'] > 0) :
 						?>
@@ -173,9 +149,71 @@ function makeLink($value)
 						<?php
 						endif;
 						?>
-						<!--リツイート-->
-						<a href="retweet.php?id=<?php echo h($post['id']); ?>"><img src="images/リツイートアイコン.png" width="15" height="15" alt="リツイートアイコン"></a>
-
+						<!--いいね-->
+						<div class="action">
+							<!--likes.phpにGETパラメータで値を受け渡す-->
+							<?php
+							if ($like) : //自分のidとlikeテーブルのmember_idが同じであり投稿のidとlikeテーブルのpost_idも同じものがあれば$LIKEに入っているので
+							?>
+								<!--もし$likeに入っていれば赤いハートを表示-->
+								<a href="cancel_likes.php?id=<?php echo h($post['id']); ?>"><img src="images/ハートのマーク.png" width="15" height="15" alt="いいね済みハート"></img></a>
+								<?php
+								if (!$like_count['post_count'] == 0) : //もしいいね数が０でなければ
+								?>
+									<?php
+									echo $like_count['post_count']; //いいねのカウント数表示する
+									?>
+								<?php
+								endif;
+								?>
+							<?php
+							else :
+							?>
+								<!--なければ色の無いハートを表示-->
+								<a href="likes.php?id=<?php echo h($post['id']); ?>"><img src="images/8760.png" width="15" height="15" alt="色無しハート"></img></a>
+								<?php
+								if (!$like_count['post_count'] == 0) : //もしいいね数が０でなければ
+								?>
+									<?php
+									echo $like_count['post_count']; //いいねのカウント数表示する
+									?>
+								<?php
+								endif;
+								?>
+							<?php
+							endif;
+							?>
+							<!--リツイート-->
+							<?php //自分のidとretweetsテーブルのretweet_member_idが同じであり投稿のidとretweet_post_も同じものがあれば$retweetに入っているので
+							if ($retweet) : //もし入っていれば水色のリツイート済みアイコンを表示
+							?>
+								<a href="cancel_retweets.php?id=<?php echo h($post['id']); ?>"><img src="images/リツイート済みアイコン.png" width="15" height="15" alt="リツイート済み"></a>
+								<?php
+								if (!$retweet_count['retweet_count'] == 0) : //もしリツイート数が０でなければ
+								?>
+									<?php
+									echo $retweet_count['retweet_count']; //リツイートのカウント数表示する
+									?>
+								<?php
+								endif;
+								?>
+							<?php
+							else :  //なければ灰色のリツイートアイコンを表示
+							?>
+								<a href="retweet.php?id=<?php echo h($post['id']); ?>"><img src="images/リツイートアイコン.png" width="15" height="15" alt="リツイート"></a>
+								<?php
+								if (!$retweet_count['retweet_count'] == 0) : //もしリツイート数が０でなければ
+								?>
+									<?php
+									echo $retweet_count['retweet_count']; //リツイートのカウント数表示する
+									?>
+								<?php
+								endif;
+								?>
+							<?php
+							endif;
+							?>
+						</div>
 					</p>
 				</div>
 			<?php
