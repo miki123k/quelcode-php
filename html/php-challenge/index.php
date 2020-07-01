@@ -11,7 +11,8 @@ if (isset($_SESSION['id']) && $_SESSION['time'] + 3600 > time()) {
 	$member = $members->fetch();
 } else {
 	// ログインしていない
-	header('Location: login.php'); exit();
+	header('Location: login.php');
+	exit();
 }
 
 // 投稿を記録する
@@ -24,7 +25,8 @@ if (!empty($_POST)) {
 			$_POST['reply_post_id']
 		));
 
-		header('Location: index.php'); exit();
+		header('Location: index.php');
+		exit();
 	}
 }
 
@@ -57,18 +59,22 @@ if (isset($_REQUEST['res'])) {
 	$message = '@' . $table['name'] . ' ' . $table['message'];
 }
 
+
 // htmlspecialcharsのショートカット
-function h($value) {
+function h($value)
+{
 	return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
 // 本文内のURLにリンクを設定します
-function makeLink($value) {
-	return mb_ereg_replace("(https?)(://[[:alnum:]\+\$\;\?\.%,!#~*/:@&=_-]+)", '<a href="\1\2">\1\2</a>' , $value);
+function makeLink($value)
+{
+	return mb_ereg_replace("(https?)(://[[:alnum:]\+\$\;\?\.%,!#~*/:@&=_-]+)", '<a href="\1\2">\1\2</a>', $value);
 }
 ?>
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -79,82 +85,128 @@ function makeLink($value) {
 </head>
 
 <body>
-<div id="wrap">
-  <div id="head">
-    <h1>ひとこと掲示板</h1>
-  </div>
-  <div id="content">
-  	<div style="text-align: right"><a href="logout.php">ログアウト</a></div>
-    <form action="" method="post">
-      <dl>
-        <dt><?php echo h($member['name']); ?>さん、メッセージをどうぞ</dt>
-        <dd>
-          <textarea name="message" cols="50" rows="5"><?php echo h($message); ?></textarea>
-          <input type="hidden" name="reply_post_id" value="<?php echo h($_REQUEST['res']); ?>" />
-        </dd>
-      </dl>
-      <div>
-        <p>
-          <input type="submit" value="投稿する" />
-        </p>
-      </div>
-    </form>
+	<div id="wrap">
+		<div id="head">
+			<h1>ひとこと掲示板</h1>
+		</div>
+		<div id="content">
+			<div style="text-align: right"><a href="logout.php">ログアウト</a></div>
+			<form action="" method="post">
+				<dl>
+					<dt><?php echo h($member['name']); ?>さん、メッセージをどうぞ</dt>
+					<dd>
+						<textarea name="message" cols="50" rows="5"><?php echo h($message); ?></textarea>
+						<input type="hidden" name="reply_post_id" value="<?php echo h($_REQUEST['res']); ?>" />
+					</dd>
+				</dl>
+				<div>
+					<p>
+						<input type="submit" value="投稿する" />
+					</p>
+				</div>
+			</form>
 
-<?php
-foreach ($posts as $post):
-?>
-    <div class="msg">
-    <img src="member_picture/<?php echo h($post['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
-    <p><?php echo makeLink(h($post['message'])); ?><span class="name">（<?php echo h($post['name']); ?>）</span>[<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
-    <p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a>
-		<?php
-if ($post['reply_post_id'] > 0):
-?>
-<a href="view.php?id=<?php echo
-h($post['reply_post_id']); ?>">
-返信元のメッセージ</a>
-<?php
-endif;
-?>
-<?php
-if ($_SESSION['id'] == $post['member_id']):
-?>
-[<a href="delete.php?id=<?php echo h($post['id']); ?>"
-style="color: #F33;">削除</a>]
-<?php
-endif;
-?>
-    </p>
-    </div>
-<?php
-endforeach;
-?>
+			<?php
+			foreach ($posts as $post) : //投稿ごとに繰り返されている。
+				//いいね機能
+				//ログインしているユーザーがその投稿をいいねしているか判定する。
+				//データの中に探しにいく　この投稿に自分のIDがあるか探す。
+				$likes = $db->prepare('SELECT member_id,post_id FROM likes WHERE member_id=? AND post_id=?');
+				$likes->execute(array($member['id'], $post['id']));
+				$like = $likes->fetch();
+				//いいね数の計算
+				$likes_count = $db->prepare('SELECT COUNT(*) AS post_count FROM likes WHERE post_id=?');
+				$likes_count->execute(array($post['id']));
+				$like_count = $likes_count->fetch();
 
-<ul class="paging">
-<?php
-if ($page > 1) {
-?>
-<li><a href="index.php?page=<?php print($page - 1); ?>">前のページへ</a></li>
-<?php
-} else {
-?>
-<li>前のページへ</li>
-<?php
-}
-?>
-<?php
-if ($page < $maxPage) {
-?>
-<li><a href="index.php?page=<?php print($page + 1); ?>">次のページへ</a></li>
-<?php
-} else {
-?>
-<li>次のページへ</li>
-<?php
-}
-?>
-</ul>
-  </div>
-</div>
+			?>
+				<div class="msg">
+					<img src="member_picture/<?php echo h($post['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
+					<p><?php echo makeLink(h($post['message'])); ?><span class="name">（<?php echo h($post['name']); ?>）</span>[<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
+					<p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a>
+						<!--ハートこの辺-->
+						<!--likes.phpにGETパラメータで値を受け渡す-->
+						<?php
+						if ($like) : //自分のidとlikeテーブルのmember_idが同じであり投稿のidとlikeテーブルのpost_idも同じものがあれば$LIKEに入っているので
+						?>
+							<!--もし$likeに入っていれば赤いハートを表示-->
+							<a href="cancel_likes.php?id=<?php echo h($post['id']); ?>"><img src="images/ハートのマーク.png" width="15" height="15" alt="いいね済みハート"></img></a>
+							<?php
+							if (!$like_count['post_count'] == 0) : //もしいいね数が０でなければ
+							?>
+								<?php
+								echo $like_count['post_count']; //いいねのカウント数表示する
+								?>
+							<?php
+							endif;
+							?>
+						<?php
+						else :
+						?>
+							<!--なければ色の無いハートを表示-->
+							<a href="likes.php?id=<?php echo h($post['id']); ?>"><img src="images/8760.png" width="15" height="15" alt="色無しハート"></img></a>
+							<?php
+							if (!$like_count['post_count'] == 0) : //もしいいね数が０でなければ
+							?>
+								<?php
+								echo $like_count['post_count']; //いいねのカウント数表示する
+								?>
+							<?php
+							endif;
+							?>
+						<?php
+						endif;
+						?>
+						<?php
+						if ($post['reply_post_id'] > 0) :
+						?>
+							<a href="view.php?id=<?php echo
+														h($post['reply_post_id']); ?>">
+								返信元のメッセージ</a>
+						<?php
+						endif;
+						?>
+						<?php
+						if ($_SESSION['id'] == $post['member_id']) :
+						?>
+							[<a href="delete.php?id=<?php echo h($post['id']); ?>" style="color: #F33;">削除</a>]
+						<?php
+						endif;
+						?>
+						<!--リツイート-->
+						<a href="retweet.php?id=<?php echo h($post['id']); ?>"><img src="images/リツイートアイコン.png" width="15" height="15" alt="リツイートアイコン"></a>
+
+					</p>
+				</div>
+			<?php
+			endforeach;
+			?>
+			<ul class="paging">
+				<?php
+				if ($page > 1) {
+				?>
+					<li><a href="index.php?page=<?php print($page - 1); ?>">前のページへ</a></li>
+				<?php
+				} else {
+				?>
+					<li>前のページへ</li>
+				<?php
+				}
+				?>
+				<?php
+				if ($page < $maxPage) {
+				?>
+					<li><a href="index.php?page=<?php print($page + 1); ?>">次のページへ</a></li>
+				<?php
+				} else {
+				?>
+					<li>次のページへ</li>
+				<?php
+				}
+				?>
+			</ul>
+		</div>
+	</div>
 </body>
+
 </html>
