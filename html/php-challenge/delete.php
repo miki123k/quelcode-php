@@ -11,23 +11,17 @@ if (isset($_SESSION['id'])) {
 	$messages->execute(array($id));
 	$message = $messages->fetch();
 
-	//文字列なのでint型に変換
-	//$member_id = (int) $message['member_id'];
-	//$retweet_post_id = (int) $message['retweet_post_id'];
-
-
-
-	if ($message['member_id'] == $_SESSION['id']) { //自分の投稿したものであれば
+	if ($message['member_id'] === $_SESSION['id']) { //自分の投稿したものであれば
 		// 自分の投稿を削除する
 		$del = $db->prepare('DELETE FROM posts WHERE id=?');
-		$del->execute(array($id));
+		$del->execute(array($message['id']));
 		//リツイートがあればリツイートも削除
 		//$idとretweet_post_idが同じものがリツイート投稿なのでそれも削除
 
 
-		if ($message['retweet_post_id'] == 0) { //オリジナル投稿ならリツイート投稿も削除する　
-			$del3 = $db->prepare('DELETE FROM posts WHERE retweet_post_id=?');
-			$del3->execute(array($id));
+		if ($retweet_post_id == 0) { //オリジナル投稿ならリツイート投稿も削除する　
+			$del2 = $db->prepare('DELETE FROM posts WHERE retweet_post_id=?');
+			$del2->execute(array($message['id']));
 		}
 	}
 }
