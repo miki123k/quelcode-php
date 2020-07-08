@@ -81,7 +81,7 @@ function makeLink($value)
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<title>ひとこと掲示板</title>
 
-	<link rel="stylesheet" href="style.css" />
+	<link rel="stylesheet" href="style.css?20200708">
 </head>
 
 <body>
@@ -108,28 +108,65 @@ function makeLink($value)
 
 			<?php
 			foreach ($posts as $post) : //投稿ごとに繰り返されている。
+
+				//オリジナル投稿であればpostのid、リツイートの場合はretweet_post_idを代入する
+				if ($post['retweet_post_id'] == 0) {
+					$origin_post_id = $post['id'];
+				} else {
+					$origin_post_id = $post['retweet_post_id'];
+				}
+
+
 				//いいね機能
 				//ログインしているユーザーがその投稿をいいねしているか判定する。
-				//データの中に探しにいく　この投稿に自分のIDがあるか探す。
-				$likes = $db->prepare('SELECT member_id,post_id FROM likes WHERE member_id=? AND post_id=?');
-				$likes->execute(array($member['id'], $post['id']));
+				//この投稿にいいねしているidに自分のIDがあるか探す。
+				$likes = $db->prepare('SELECT * FROM likes WHERE member_id=? AND post_id=?');
+				$likes->execute(array($member['id'], $origin_post_id));
 				$like = $likes->fetch();
+				//
 				//いいね数の計算
 				$likes_count = $db->prepare('SELECT COUNT(*) AS post_count FROM likes WHERE post_id=?');
-				$likes_count->execute(array($post['id']));
+				$likes_count->execute(array($origin_post_id));
 				$like_count = $likes_count->fetch();
 
+
 				//リツイート機能
-				$retweets = $db->prepare('SELECT retweet_member_id,retweet_post FROM retweets WHERE retweet_member_id=? AND retweet_post=?');
-				$retweets->execute(array($member['id'], $post['id']));
-				$retweet = $retweets->fetch();
+				//この投稿をリツイートしている投稿があるか探す
+				//投稿のidがretweet_post_idに入っているものがあるかどうか
+				//オリジナル投稿であればpostのidで検索し、リツイートの場合はretweet_post_idで検索する
+				$origin_retweets = $db->prepare('SELECT * FROM posts WHERE retweet_post_id=? AND retweet_member_id=?');
+				$origin_retweets->execute(array($origin_post_id, $member['id']));
+				$origin_retweet = $origin_retweets->fetch();
+
+
 				//リツイート数の計算
-				$retweets_count = $db->prepare('SELECT COUNT(*) AS retweet_count FROM retweets WHERE retweet_post=?');
-				$retweets_count->execute(array($post['id']));
+				//オリジナル投稿であればpostのidで検索し、リツイートの場合はretweet_post_idで検索する
+				$retweets_count = $db->prepare('SELECT COUNT(*) AS retweet_count FROM posts WHERE retweet_post_id=?');
+				$retweets_count->execute(array($origin_post_id));
 				$retweet_count = $retweets_count->fetch();
+
+				//リツイート者の表示
+
+
+				$retweet_members = $db->prepare(('SELECT name FROM members WHERE id=?'));
+				$retweet_members->execute(array($post['retweet_member_id']));
+				$retweet_member = $retweet_members->fetch();
+
 
 			?>
 				<div class="msg">
+					<?php
+					if ($post['retweet_member_id'] === $member['id']) :
+					?>
+						<p class="retweet_message">リツイート済み</p>
+					<?php
+					elseif ($retweet_member) :
+					?>
+						<p class="retweet_message"><?php echo h($retweet_member['name']) ?>さんがリツイートしました</p>
+					<?php
+					endif;
+					?>
+
 					<img src="member_picture/<?php echo h($post['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
 					<p><?php echo makeLink(h($post['message'])); ?><span class="name">（<?php echo h($post['name']); ?>）</span>[<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
 					<p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a>
@@ -145,18 +182,28 @@ function makeLink($value)
 						<?php
 						if ($_SESSION['id'] == $post['member_id']) :
 						?>
-							[<a href="delete.php?id=<?php echo h($post['id']); ?>" style="color: #F33;">削除</a>]
+							[<a href="delete.php?id=<?php echo h($origin_post_id); ?>" style="color: #F33;">削除</a>]
 						<?php
 						endif;
 						?>
-						<!--いいね-->
 						<div class="action">
-							<!--likes.phpにGETパラメータで値を受け渡す-->
-							<?php
-							if ($like) : //自分のidとlikeテーブルのmember_idが同じであり投稿のidとlikeテーブルのpost_idも同じものがあれば$LIKEに入っているので
-							?>
-								<!--もし$likeに入っていれば赤いハートを表示-->
-								<a href="cancel_likes.php?id=<?php echo h($post['id']); ?>"><img src="images/ハートのマーク.png" width="15" height="15" alt="いいね済みハート"></img></a>
+							<!--いいね-->
+							<div class="like">
+								<?php
+								if ($like) : //もし$likeに入っていれば赤いハートを表示
+								?>
+									<a href="cancel_likes.php?id=<?php echo h($post['id']); ?>"><img src="images/ハートのマーク.png" width="15" height="15" alt="いいね済みハート"></img></a>
+								<?php
+								elseif ($post['id'] == $retweet['retweet_post_id']) : //リツイート投稿があればそちらにも赤いハートを表示
+								?>
+									<a href="cancel_retweets.php?id=<?php echo h($post['id']); ?>"><img src="images/リツイート済みアイコン.png" width="15" height="15" alt="リツイート済み"></a>
+								<?php
+								else : //なければ色の無いハートを表示
+								?>
+									<a href="likes.php?id=<?php echo h($post['id']); ?>"><img src="images/8760.png" width="15" height="15" alt="色無しハート"></img></a>
+								<?php
+								endif;
+								?>
 								<?php
 								if (!$like_count['post_count'] == 0) : //もしいいね数が０でなければ
 								?>
@@ -166,53 +213,28 @@ function makeLink($value)
 								<?php
 								endif;
 								?>
-							<?php
-							else :
-							?>
-								<!--なければ色の無いハートを表示-->
-								<a href="likes.php?id=<?php echo h($post['id']); ?>"><img src="images/8760.png" width="15" height="15" alt="色無しハート"></img></a>
-								<?php
-								if (!$like_count['post_count'] == 0) : //もしいいね数が０でなければ
+							</div>
+							<div class="retweet">
+								<!--リツイート-->
+								<?php //自分のidとpostsテーブルのretweet_member_idが同じであり、投稿のidとretweet_post_idも同じものがあれば$retweetに値が入っている。
+								if ($origin_retweet) : //もし入っていれば(リツイートされていれば)水色のリツイート済みアイコンを表示
 								?>
-									<?php
-									echo $like_count['post_count']; //いいねのカウント数表示する
-									?>
+									<a href="cancel_retweets.php?id=<?php echo h($origin_post_id); ?>"><img src="images/リツイート済みアイコン.png" width="15" height="15" alt="リツイート済み"></a>
+								<?php
+								else :  //なければ灰色のリツイートアイコンを表示
+								?>
+									<a href="retweet.php?id=<?php echo h($origin_post_id); ?>"><img src="images/リツイートアイコン.png" width="15" height="15" alt="リツイート"></a>
 								<?php
 								endif;
 								?>
-							<?php
-							endif;
-							?>
-							<!--リツイート-->
-							<?php //自分のidとretweetsテーブルのretweet_member_idが同じであり投稿のidとretweet_post_も同じものがあれば$retweetに入っているので
-							if ($retweet) : //もし入っていれば水色のリツイート済みアイコンを表示
-							?>
-								<a href="cancel_retweets.php?id=<?php echo h($post['id']); ?>"><img src="images/リツイート済みアイコン.png" width="15" height="15" alt="リツイート済み"></a>
 								<?php
 								if (!$retweet_count['retweet_count'] == 0) : //もしリツイート数が０でなければ
-								?>
-									<?php
 									echo $retweet_count['retweet_count']; //リツイートのカウント数表示する
-									?>
+								?>
 								<?php
 								endif;
 								?>
-							<?php
-							else :  //なければ灰色のリツイートアイコンを表示
-							?>
-								<a href="retweet.php?id=<?php echo h($post['id']); ?>"><img src="images/リツイートアイコン.png" width="15" height="15" alt="リツイート"></a>
-								<?php
-								if (!$retweet_count['retweet_count'] == 0) : //もしリツイート数が０でなければ
-								?>
-									<?php
-									echo $retweet_count['retweet_count']; //リツイートのカウント数表示する
-									?>
-								<?php
-								endif;
-								?>
-							<?php
-							endif;
-							?>
+							</div>
 						</div>
 					</p>
 				</div>
