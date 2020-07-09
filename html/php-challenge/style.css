@@ -144,3 +144,12 @@ li {
 	color: #999;
 }
 
+.retweet_message {
+	font-size: 15px;
+}
+.action {
+	display: flex;
+}
+.like .retweet {
+	display: inline-block;
+}
