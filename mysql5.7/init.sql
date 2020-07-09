@@ -21,7 +21,7 @@ CREATE TABLE `posts`(
       PRIMARY KEY(`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
-CREATE TABLE "likes"(
+CREATE TABLE `likes`(
       `like_id` int(11) NOT NULL AUTO_INCREMENT, 
       `member_id` int(11) NOT NULL,
       `post_id` int(11) NOT NULL,
