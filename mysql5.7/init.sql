@@ -5,7 +5,7 @@ CREATE TABLE `members`(
       `password` varchar(100) NOT NULL,
       `picture` varchar(255) NOT NULL,
       `created` datetime NOT NULL,
-      `modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON　UPDATE CURRENT_TIMESTAMP,
+      `modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY(`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
@@ -17,7 +17,7 @@ CREATE TABLE `posts`(
       `retweet_post_id` int(11) NOT NULL,
       `retweet_member_id` int(11) NOT NULL,
       `created` datetime NOT NULL,
-      `modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON　UPDATE CURRENT_TIMESTAMP,
+      `modified` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY(`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
 
