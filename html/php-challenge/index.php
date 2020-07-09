@@ -126,7 +126,7 @@ function makeLink($value)
 				$likes_count = $db->prepare('SELECT COUNT(*) AS post_count FROM likes WHERE post_id=?');
 				$likes_count->execute(array($origin_post_id));
 				$like_count = $likes_count->fetch();
-				$like_count = $like_count['post_count'];
+
 
 				//リツイート機能
 				//この投稿をリツイートしている投稿があるか探す(投稿のidがretweet_post_idに入っているものがあるかどうか)
@@ -140,7 +140,6 @@ function makeLink($value)
 				$retweets_count = $db->prepare('SELECT COUNT(*) AS retweet_count FROM posts WHERE retweet_post_id=?');
 				$retweets_count->execute(array($origin_post_id));
 				$retweet_count = $retweets_count->fetch();
-				$retweet_count = $retweet_count['retweet_count'];
 
 				//リツイート者の表示
 				$retweet_members = $db->prepare(('SELECT name FROM members WHERE id=?'));
@@ -197,10 +196,10 @@ function makeLink($value)
 								endif;
 								?>
 								<?php
-								if (!$like_count == 0) : //もしいいね数が０でなければ
+								if (!$like_count['post_count'] == 0) : //もしいいね数が０でなければ
 								?>
 									<?php
-									echo $like_count; //いいねのカウント数表示する
+									echo $like_count['post_count']; //いいねのカウント数表示する
 									?>
 								<?php
 								endif;
@@ -220,8 +219,8 @@ function makeLink($value)
 								endif;
 								?>
 								<?php
-								if (!$retweet_count == 0) : //もしリツイート数が０でなければ
-									echo $retweet_count; //リツイートのカウント数表示する
+								if (!$retweet_count['retweet_count'] == 0) : //もしリツイート数が０でなければ
+									echo $retweet_count['retweet_count']; //リツイートのカウント数表示する
 								?>
 								<?php
 								endif;
